@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using SistemaCadastroAPI.Data;
 using SistemaCadastroAPI.Models;
+using SistemaCadastroAPI.Services;
 
 namespace SistemaCadastroAPI.Controllers;
 
@@ -9,56 +8,49 @@ namespace SistemaCadastroAPI.Controllers;
 [ApiController]
 public class FuncionarioController : ControllerBase
 {
-    private readonly AppDbContext _context;
+    private readonly FuncionarioService _service;
 
-    public FuncionarioController(AppDbContext context)
+    public FuncionarioController(FuncionarioService service)
     {
-        _context = context;
+        _service = service;
     }
 
     [HttpGet]
     public IActionResult GetAll()
     {
-        return Ok(_context.Funcionarios.ToList());
+        return Ok(_service.GetAll());
     }
 
     [HttpPost]
     public IActionResult Create([FromBody] Funcionario funcionario)
     {
-        _context.Funcionarios.Add(funcionario);
-        _context.SaveChanges();
+        _service.Add(funcionario);
         return CreatedAtAction(nameof(GetAll), new { id = funcionario.Id }, funcionario);
     }
 
     [HttpGet("{id}")]
     public IActionResult GetById(int id)
     {
-        var funcionario = _context.Funcionarios.FirstOrDefault(f => f.Id == id);
-
+        var funcionario = _service.GetById(id);
         if (funcionario == null)
             return NotFound();
-
         return Ok(funcionario);
     }
 
     [HttpDelete("{id}")]
     public IActionResult RemoveById(int id)
     {
-        var funcionario = _context.Funcionarios.FirstOrDefault(f => f.Id == id);
-
+        var funcionario = _service.GetById(id);
         if (funcionario == null)
             return NotFound();
-
-        _context.Funcionarios.Remove(funcionario);
-        _context.SaveChanges();
+        _service.Remove(funcionario);
         return NoContent();
     }
 
     [HttpPut("{id}")]
     public IActionResult Atualizar(int id, [FromBody] Funcionario funcionarioAtualizado)
     {
-        var funcionario = (_context.Funcionarios.FirstOrDefault(f =>f.Id == id));
-
+        var funcionario = _service.GetById(id);
         if (funcionario == null)
             return NotFound();
 
@@ -68,7 +60,7 @@ public class FuncionarioController : ControllerBase
         funcionario.Salario = funcionarioAtualizado.Salario;
         funcionario.Idade = funcionarioAtualizado.Idade;
 
-        _context.SaveChanges();
+        _service.Update(funcionario);
         return NoContent();
     }
 }
