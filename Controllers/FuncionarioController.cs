@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using SistemaCadastroAPI.DTOs;
 using SistemaCadastroAPI.Models;
 using SistemaCadastroAPI.Services;
 
@@ -18,12 +19,31 @@ public class FuncionarioController : ControllerBase
     [HttpGet]
     public IActionResult GetAll()
     {
-        return Ok(_service.GetAll());
+        var funcionarios = _service.GetAll()
+            .Select(f => new FuncionarioResponseDTO
+            {
+                Id = f.Id,
+                Nome = f.Nome,
+                Cargo = f.Cargo,
+                Salario = f.Salario,
+                Idade = f.Idade
+            });
+
+        return Ok(funcionarios);
     }
 
     [HttpPost]
-    public IActionResult Create([FromBody] Funcionario funcionario)
+    public IActionResult Create([FromBody] FuncionarioCreateDTO dto)
     {
+        var funcionario = new Funcionario
+        {
+            Nome = dto.Nome,
+            Cpf = dto.Cpf,
+            Cargo = dto.Cargo,
+            Salario = dto.Salario,
+            Idade = dto.Idade
+        };
+
         _service.Add(funcionario);
         return CreatedAtAction(nameof(GetAll), new { id = funcionario.Id }, funcionario);
     }
@@ -34,7 +54,17 @@ public class FuncionarioController : ControllerBase
         var funcionario = _service.GetById(id);
         if (funcionario == null)
             return NotFound();
-        return Ok(funcionario);
+
+        var dto = new FuncionarioResponseDTO
+        {
+            Id = funcionario.Id,
+            Nome = funcionario.Nome,
+            Cargo = funcionario.Cargo,
+            Salario = funcionario.Salario,
+            Idade = funcionario.Idade
+        };
+
+        return Ok(dto);
     }
 
     [HttpDelete("{id}")]
@@ -43,22 +73,23 @@ public class FuncionarioController : ControllerBase
         var funcionario = _service.GetById(id);
         if (funcionario == null)
             return NotFound();
+
         _service.Remove(funcionario);
         return NoContent();
     }
 
     [HttpPut("{id}")]
-    public IActionResult Atualizar(int id, [FromBody] Funcionario funcionarioAtualizado)
+    public IActionResult Atualizar(int id, [FromBody] FuncionarioCreateDTO dto)
     {
         var funcionario = _service.GetById(id);
         if (funcionario == null)
             return NotFound();
 
-        funcionario.Nome = funcionarioAtualizado.Nome;
-        funcionario.Cpf = funcionarioAtualizado.Cpf;
-        funcionario.Cargo = funcionarioAtualizado.Cargo;
-        funcionario.Salario = funcionarioAtualizado.Salario;
-        funcionario.Idade = funcionarioAtualizado.Idade;
+        funcionario.Nome = dto.Nome;
+        funcionario.Cpf = dto.Cpf;
+        funcionario.Cargo = dto.Cargo;
+        funcionario.Salario = dto.Salario;
+        funcionario.Idade = dto.Idade;
 
         _service.Update(funcionario);
         return NoContent();
