@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using SistemaCadastroAPI.DTOs;
 using SistemaCadastroAPI.Models;
 using SistemaCadastroAPI.Services;
@@ -7,6 +8,7 @@ namespace SistemaCadastroAPI.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
+[Authorize]
 public class FuncionarioController : ControllerBase
 {
     private readonly FuncionarioService _service;
@@ -17,9 +19,9 @@ public class FuncionarioController : ControllerBase
     }
 
     [HttpGet]
-    public IActionResult GetAll()
+    public async Task<IActionResult> GetAll()
     {
-        var funcionarios = _service.GetAll()
+        var funcionarios = (await _service.GetAll())
             .Select(f => new FuncionarioResponseDTO
             {
                 Id = f.Id,
@@ -33,7 +35,7 @@ public class FuncionarioController : ControllerBase
     }
 
     [HttpPost]
-    public IActionResult Create([FromBody] FuncionarioCreateDTO dto)
+    public async Task<IActionResult> Create([FromBody] FuncionarioCreateDTO dto)
     {
         var funcionario = new Funcionario
         {
@@ -44,14 +46,14 @@ public class FuncionarioController : ControllerBase
             Idade = dto.Idade
         };
 
-        _service.Add(funcionario);
+        await _service.Add(funcionario);
         return CreatedAtAction(nameof(GetAll), new { id = funcionario.Id }, funcionario);
     }
-
+    
     [HttpGet("{id}")]
-    public IActionResult GetById(int id)
+    public async Task<IActionResult> GetById(int id)
     {
-        var funcionario = _service.GetById(id);
+        var funcionario = await _service.GetById(id);
         if (funcionario == null)
             return NotFound();
 
@@ -68,20 +70,20 @@ public class FuncionarioController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    public IActionResult RemoveById(int id)
+    public async Task<IActionResult> RemoveById(int id)
     {
-        var funcionario = _service.GetById(id);
+        var funcionario = await _service.GetById(id);
         if (funcionario == null)
             return NotFound();
 
-        _service.Remove(funcionario);
+        await _service.Remove(funcionario);
         return NoContent();
     }
 
     [HttpPut("{id}")]
-    public IActionResult Atualizar(int id, [FromBody] FuncionarioCreateDTO dto)
+    public async Task<IActionResult> Atualizar(int id, [FromBody] FuncionarioCreateDTO dto)
     {
-        var funcionario = _service.GetById(id);
+        var funcionario = await _service.GetById(id);
         if (funcionario == null)
             return NotFound();
 
@@ -91,7 +93,7 @@ public class FuncionarioController : ControllerBase
         funcionario.Salario = dto.Salario;
         funcionario.Idade = dto.Idade;
 
-        _service.Update(funcionario);
+        await _service.Update(funcionario);
         return NoContent();
     }
 }

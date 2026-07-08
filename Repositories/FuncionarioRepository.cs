@@ -1,4 +1,5 @@
-﻿using SistemaCadastroAPI.Data;
+﻿using Microsoft.EntityFrameworkCore;
+using SistemaCadastroAPI.Data;
 using SistemaCadastroAPI.Models;
 
 namespace SistemaCadastroAPI.Repositories
@@ -12,31 +13,31 @@ namespace SistemaCadastroAPI.Repositories
             _context = context;
         }
 
-        public List<Funcionario> GetAll()
+        public async Task<List<Funcionario>> GetAll()
         {
-            return _context.Funcionarios.ToList();
+            return await _context.Funcionarios.ToListAsync();
         }
 
-        public Funcionario? GetById(int id)
+        public async Task<Funcionario?> GetById(int id)
         {
-            return _context.Funcionarios.FirstOrDefault(f => f.Id == id);
+            return await _context.Funcionarios.FirstOrDefaultAsync(f => f.Id == id);
         }
 
-        public void Add(Funcionario funcionario)
+        public async Task Add(Funcionario funcionario)
         {
             _context.Funcionarios.Add(funcionario);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
         }
 
-        public void Update(Funcionario funcionario)
+        public async Task Update(Funcionario funcionario)
         {
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
         }
 
-        public void Remove(Funcionario funcionario)
+        public async Task Remove(Funcionario funcionario)
         {
             _context.Funcionarios.Remove(funcionario);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
         }
     }
 }
