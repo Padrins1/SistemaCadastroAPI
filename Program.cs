@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using Swashbuckle.AspNetCore.SwaggerGen;
 using SistemaCadastroAPI.Data;
 using SistemaCadastroAPI.Repositories;
 using SistemaCadastroAPI.Services;
@@ -15,19 +16,12 @@ builder.Services.AddSwaggerGen(c =>
 {
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        Name = "Authorization",
-        Type = SecuritySchemeType.ApiKey,
-        Scheme = "Bearer",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
         BearerFormat = "JWT",
-        In = ParameterLocation.Header,
-        Description = "Digite: Bearer {seu token}"
+        Description = "Cole aqui só o token JWT"
     });
-    c.AddSecurityRequirement(doc =>
-    {
-        var req = new OpenApiSecurityRequirement();
-        req[new OpenApiSecuritySchemeReference("Bearer")] = new List<string>();
-        return req;
-    });
+    c.DocumentFilter<JwtSecurityDocumentFilter>();
 });
 
 // JWT
@@ -57,7 +51,20 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(options =>
+    {
+        options.UseRequestInterceptor(
+            "(req) => {" +
+            "  try {" +
+            "    var auth = window.ui.authSelectors.authorized().toJS();" +
+            "    if (auth && auth.Bearer && auth.Bearer.value) {" +
+            "      req.headers['Authorization'] = 'Bearer ' + auth.Bearer.value;" +
+            "    }" +
+            "  } catch(e) {}" +
+            "  return req;" +
+            "}"
+        );
+    });
 }
 
 app.UseHttpsRedirection();
@@ -66,3 +73,15 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+// Adiciona segurança global no swagger.json (todas as operações herdam)
+public class JwtSecurityDocumentFilter : IDocumentFilter
+{
+    public void Apply(OpenApiDocument swaggerDoc, DocumentFilterContext context)
+    {
+        swaggerDoc.Security ??= new List<OpenApiSecurityRequirement>();
+        var req = new OpenApiSecurityRequirement();
+        req[new OpenApiSecuritySchemeReference("#/components/securitySchemes/Bearer")] = new List<string>();
+        swaggerDoc.Security.Add(req);
+    }
+}
